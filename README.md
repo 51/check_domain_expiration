@@ -1,7 +1,5 @@
-Nagios/Icinga Plugin: check\_domain
+Build from Nagios/Icinga Plugin: [check\_domain](https://github.com/glensc/monitoring-plugin-check_domain)
 ===================================
-
-[![Build Status](https://travis-ci.org/glensc/monitoring-plugin-check_domain.svg?branch=master)](https://travis-ci.org/glensc/monitoring-plugin-check_domain)
 
 Nagios/Icinga plugin for checking a domain name expiration date
 

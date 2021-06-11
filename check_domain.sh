@@ -229,7 +229,7 @@ run_whois() {
 		error=0
 	fi
 
-	[ $error -eq 0 ] || die "$STATE_UNKNOWN" "UNKNOWN - WHOIS exited with error $error."
+	[ $error -eq 0 ] || die "$STATE_UNKNOWN" "$domain  UNKNOWN - WHOIS exited with error $error."
 }
 
 # Calculate days until expiration from whois output
@@ -472,7 +472,13 @@ else
 fi
 expiration=$(get_expiration "$outfile")
 
-[ -z "$expiration" ] && die "$STATE_UNKNOWN" "UNKNOWN - Unable to figure out expiration date for $domain Domain."
+AWK=`which awk`
+registrar=`cat ${outfile} | ${AWK} -F: '/Registrar:/ && $2 != ""  { REGISTRAR=substr($2,2,17) } END { print REGISTRAR }'`
+nameserver=$(cat ${outfile} | grep "Name Server" | cut -d ":" -f 2| sed ':a;N;$!ba;s/\n/,/g')
+#nameserver="${nameserver//$'\n'/,}"
+#bar="${nameserver// /,}"
+
+[ -z "$expiration" ] && die "$STATE_UNKNOWN" "$domain UNKNOWN - Unable to figure out expiration date for $domain Domain."
 
 expseconds=$(date +%s --date="$expiration")
 expdate=$(date +'%Y-%m-%d' --date="$expiration")
@@ -486,11 +492,12 @@ if [ $expdays -ge 0 ]; then
 	[ $expdays -lt "$warning" ] && die "$STATE_WARNING" "WARNING - Domain $domain will expire in $expdays days ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
 
 	# No alarms? Ok, everything is right.
-	die "$STATE_OK" "OK - Domain $domain will expire in $expdays days ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
+	printf "%-20s %-35s %-16s %-12s %-35s\n" "$domain" "$registrar" "$expdate" "$expdays" "$nameserver"
+	#die "$STATE_OK" "OK - Domain $domain will expire in $expdays days ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
 fi
 
 # Trigger alarms if applicable in the case that $warning and/or $critical are negative
 [ $expdays -lt "$critical" ] && die "$STATE_CRITICAL" "CRITICAL - Domain $domain expired ${expdays#-} days ago ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
 [ $expdays -lt "$warning" ] && die "$STATE_WARNING" "WARNING - Domain $domain expired ${expdays#-} days ago ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
 # No alarms? Ok, everything is right.
-die "$STATE_OK" "OK - Domain $domain expired ${expdays#-} days ago ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
+#die "$STATE_OK" "OK2 - Domain $domain expired ${expdays#-} days ago ($expdate). | domain_days_until_expiry=$expdays;$warning;$critical"
